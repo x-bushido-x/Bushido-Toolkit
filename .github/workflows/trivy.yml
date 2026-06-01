@@ -26,7 +26,7 @@ jobs:
           scan-ref: '.'
           format: 'sarif'
           output: 'trivy-fs-results.sarif'
-          exit-code: '0'  # Don't fail on findings
+          exit-code: '0'
       
       - name: Run Trivy scan on Docker image
         uses: aquasecurity/trivy-action@master
@@ -34,7 +34,7 @@ jobs:
           image-ref: 'bushidotoolkit:latest'
           format: 'sarif'
           output: 'trivy-docker-results.sarif'
-          exit-code: '0'  # Don't fail on findings
+          exit-code: '0'
       
       - name: Upload filesystem results
         uses: github/codeql-action/upload-sarif@v3
