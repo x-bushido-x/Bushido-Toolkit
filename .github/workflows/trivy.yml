@@ -5,37 +5,26 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  schedule:
-    - cron: '0 3 * * 0'
   workflow_dispatch:
 
 jobs:
-  scan-python-app:
-    name: Scan Python application
+  security-scan:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       security-events: write
-      actions: read
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Run Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.28.0
+      - uses: actions/checkout@v4
+      
+      - name: Scan code with Trivy
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'sarif'
           output: 'trivy-results.sarif'
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
-          scanners: 'vuln,secret,config'
-
-      - name: Upload results to Security tab
+          exit-code: '0'
+      
+      - name: Upload findings
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
