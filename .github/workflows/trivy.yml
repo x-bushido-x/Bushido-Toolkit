@@ -5,17 +5,23 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  schedule:
+    - cron: '0 3 * * 0'
   workflow_dispatch:
 
 jobs:
+  # JOB 1: Scan Python filesystem
   scan-filesystem:
     name: Scan Python code
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       security-events: write
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -24,33 +30,29 @@ jobs:
           format: 'sarif'
           output: 'trivy-fs-results.sarif'
           exit-code: '0'
+          severity: 'CRITICAL,HIGH'
 
-      - name: Upload FS results
+      - name: Upload filesystem results
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-fs-results.sarif'
           category: 'filesystem-scan'
 
+  # JOB 2: Scan Docker image
   scan-docker:
     name: Scan Docker image
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       security-events: write
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Create Dockerfile
-        run: |
-          echo 'FROM python:3.9-slim' > Dockerfile
-          echo 'WORKDIR /app' >> Dockerfile
-          echo 'COPY requirements.txt .' >> Dockerfile
-          echo 'RUN pip install --no-cache-dir -r requirements.txt' >> Dockerfile
-          echo 'COPY . .' >> Dockerfile
-          echo 'CMD ["python", "Bushido.py"]' >> Dockerfile
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Build Docker image
         run: docker build -t bushidotoolkit:latest .
-      
+
       - name: Run Trivy Docker scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -58,6 +60,7 @@ jobs:
           format: 'sarif'
           output: 'trivy-docker-results.sarif'
           exit-code: '0'
+          severity: 'CRITICAL,HIGH'
 
       - name: Upload Docker results
         uses: github/codeql-action/upload-sarif@v3
