@@ -5,24 +5,21 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  schedule:
-    - cron: '0 3 * * 0'
   workflow_dispatch:
 
 jobs:
-  # JOB 1: Scan Python filesystem
-  scan-filesystem:
-    name: Scan Python code
+  security-scan:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       security-events: write
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy filesystem scan
+      - uses: actions/checkout@v4
+      
+      - name: Build Docker image
+        run: docker build -t bushidotoolkit:latest .
+      
+      - name: Run Trivy scan on filesystem
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
@@ -30,40 +27,21 @@ jobs:
           format: 'sarif'
           output: 'trivy-fs-results.sarif'
           exit-code: '0'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload filesystem results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-fs-results.sarif'
-          category: 'filesystem-scan'
-
-  # JOB 2: Scan Docker image
-  scan-docker:
-    name: Scan Docker image
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: docker build -t bushidotoolkit:latest .
-
-      - name: Run Trivy Docker scan
+      
+      - name: Run Trivy scan on Docker image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'bushidotoolkit:latest'
           format: 'sarif'
           output: 'trivy-docker-results.sarif'
           exit-code: '0'
-          severity: 'CRITICAL,HIGH'
-
+      
+      - name: Upload filesystem results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+      
       - name: Upload Docker results
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-docker-results.sarif'
-          category: 'docker-image-scan'
