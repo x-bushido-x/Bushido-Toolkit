@@ -1,0 +1,5 @@
+scapy>=2.5.0
+colorama>=0.4.6
+pyxploitdb>=2.0
+requests>=2.28.0
+paramiko>=3.0.0
