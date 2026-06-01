@@ -13,7 +13,7 @@ permissions:
   actions: read
 
 jobs:
-  test:
+  Bushido-Toolkit:
     runs-on: ubuntu-latest
     
     # Define a testing strategy to test on multiple Python versions
