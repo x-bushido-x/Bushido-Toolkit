@@ -5,26 +5,88 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  schedule:
+    - cron: '0 3 * * 0'
   workflow_dispatch:
 
 jobs:
-  security-scan:
+  # JOB 1: Scan Python filesystem
+  scan-filesystem:
+    name: Scan Python code
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       security-events: write
+      actions: read
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Scan code with Trivy
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'sarif'
-          output: 'trivy-results.sarif'
+          output: 'trivy-fs-results.sarif'
           exit-code: '0'
-      
-      - name: Upload findings
+          severity: 'CRITICAL,HIGH'
+          scanners: 'vuln,secret,config'
+
+      - name: Upload filesystem results to Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: 'trivy-fs-results.sarif'
+          category: 'trivy-filesystem'
+
+  # JOB 2: Build and scan Docker image
+  scan-docker:
+    name: Build and scan Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create a simple Dockerfile (if none exists)
+        run: |
+          if [ ! -f Dockerfile ]; then
+            cat > Dockerfile << 'EOF'
+            FROM python:3.9-slim
+            WORKDIR /app
+            COPY requirements.txt .
+            RUN pip install --no-cache-dir -r requirements.txt
+            COPY . .
+            CMD ["python", "Bushido.py"]
+            EOF
+            echo "Created Dockerfile with Bushido.py as entry point"
+          else
+            echo "Using existing Dockerfile"
+          fi
+
+      - name: Build Docker image
+        run: |
+          docker build -t bushidotoolkit:latest .
+
+      - name: Run Trivy Docker image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'bushidotoolkit:latest'
+          format: 'sarif'
+          output: 'trivy-docker-results.sarif'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+          scanners: 'vuln,secret'
+
+      - name: Upload Docker results to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-docker-results.sarif'
+          category: 'trivy-docker-image'
